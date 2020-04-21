@@ -1,7 +1,7 @@
 /* --------------------------------------------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
+ * -------------------------------------------------------------------------------------------- */
 
 import * as vscode from 'vscode';
 import * as vscodeapi from 'vscode';
@@ -42,7 +42,7 @@ import { TelemetryReporter } from './TelemetryReporter';
 
 // We specifically need to take a reference to a particular instance of the vscode namespace,
 // otherwise providers attempt to operate on the null extension.
-export async function activate(vscodeType: typeof vscodeapi, context: ExtensionContext, languageServerDir: string, eventStream: HostEventStream, enableProposedApis = false) {
+export async function activate(vscodeType: typeof vscodeapi, context: ExtensionContext, languageServerDir: string, eventStream: HostEventStream, enableProposedApis = false): Promise<void> {
     const telemetryReporter = new TelemetryReporter(eventStream);
     const eventEmitterFactory: IEventEmitterFactory = {
         create: <T>() => new vscode.EventEmitter<T>(),
@@ -68,7 +68,7 @@ export async function activate(vscodeType: typeof vscodeapi, context: ExtensionC
         const razorCodeActionRunner = new RazorCodeActionRunner(languageServerClient, logger);
 
         const onStartRegistration = languageServerClient.onStart(async () => {
-            vscodeType.commands.executeCommand<void>('omnisharp.registerLanguageMiddleware', razorLanguageMiddleware);
+            void vscodeType.commands.executeCommand<void>('omnisharp.registerLanguageMiddleware', razorLanguageMiddleware);
             const documentSynchronizer = new RazorDocumentSynchronizer(documentManager, logger);
             const provisionalCompletionOrchestrator = new ProvisionalCompletionOrchestrator(
                 documentManager,
@@ -206,7 +206,7 @@ async function startLanguageServer(
     vscodeType: typeof vscodeapi,
     languageServerClient: RazorLanguageServerClient,
     logger: RazorLogger,
-    context: vscode.ExtensionContext) {
+    context: vscode.ExtensionContext): Promise<void> {
 
     const razorFiles = await vscodeType.workspace.findFiles(RazorLanguage.globbingPattern);
     if (razorFiles.length === 0) {
@@ -214,7 +214,7 @@ async function startLanguageServer(
         logger.logAlways('No Razor files detected in workspace, delaying language server start.');
 
         const watcher = vscodeType.workspace.createFileSystemWatcher(RazorLanguage.globbingPattern);
-        const delayedLanguageServerStart = async () => {
+        const delayedLanguageServerStart = async (): Promise<void> => {
             razorFileCreatedRegistration.dispose();
             razorFileOpenedRegistration.dispose();
             await languageServerClient.start();
